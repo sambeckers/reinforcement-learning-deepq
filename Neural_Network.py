@@ -30,6 +30,31 @@ class NeuralNetwork(nn.Module):
         x = f.relu(self.fc2(x))
         return self.fc3(x).float()
 
+class DQN(nn.Module):
+    def __init__(self, input_dim, output_dim, neurons, architecture=1):
+        super(DQN, self).__init__()
+        self.architecture = architecture
+
+        print(architecture)
+        
+        if architecture == 1:
+            self.input = nn.Linear(input_dim, neurons)
+            self.output = nn.Linear(neurons, output_dim)
+            print(neurons)
+        elif architecture == 2:
+            self.input = nn.Linear(input_dim, neurons)
+            self.layer = nn.Linear(neurons, neurons)
+            self.output = nn.Linear(neurons, output_dim)
+            print(neurons)
+
+    def forward(self, x):
+        if self.architecture == 1:
+            x = f.relu(self.input(x))
+            return self.output(x)
+        elif self.architecture == 2:
+            x = f.relu(self.input(x))
+            x = f.relu(self.layer(x))
+            return self.output(x)
 
 class ConvNeuralNetwork(nn.Module):
     def __init__(self):

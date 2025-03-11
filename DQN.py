@@ -42,14 +42,13 @@ class DQNAgent(DQN_BaseAgent):
         self.optim.step()
 
 
-def dqn(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval = 500, 
+def dqn(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=False, eval_interval = 500, 
         buffer_size=10000, batch_size=64, neurons=128):
     ''' runs DQN on a gym environment
     Return: rewards, a vector with the observed rewards at each timestep ''' 
 
     # Initialize environment and agent
     env = CartPole().env
-    eval_env = CartPole().env
     agent = DQNAgent(env.observation_space.shape[0], env.action_space.n, learning_rate, gamma, neurons, buffer_size, batch_size)
 
     # Store rewards and evaluation results
@@ -58,22 +57,29 @@ def dqn(n_timesteps, learning_rate, gamma, policy='egreedy', epsilon=None, temp=
     eval_returns = []
 
     for t in tqdm(range(n_timesteps), total=n_timesteps):
-        s = env.reset()[0] #s=s_0
+        s_reset = env.reset()#s=s_0
+        s_0 = s_reset[0] if isinstance(s_reset, tuple) else s_reset
+        if isinstance(s_0, tuple):
+            s_0 = np.array(s_0)
+        s = torch.from_numpy(s_0).float().unsqueeze(0)
+
         done = False
         while not done:
             a = agent.select_action(s, policy=policy, epsilon=epsilon, temp=temp)
             s_next, r, done, *_ = env.step(a)
+            s_next_tensor = torch.from_numpy(s_next).float().unsqueeze(0)
             agent.update(s, a, r, s_next, done)
-            s = s_next
+            s = s_next_tensor
+            s_0 = s_next
             r_tot += r
             if done:
                 break
         if t % eval_interval == 0 and t != 0:
-            eval_return = agent.evaluate(eval_env)
+            eval_return = agent.evaluate(env)
             eval_returns.append(eval_return)
             eval_timesteps.append(t)
-            if plot:
-                env.render()
+            # if plot:
+            #     env.render()
     return np.array(eval_returns), np.array(eval_timesteps)   
 
 def test():  
@@ -86,7 +92,7 @@ def test():
     epsilon = 0.01
     temp = 1.0
 
-    plot = True
+    plot = False
 
     dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, buffer_size, batch_size)
 

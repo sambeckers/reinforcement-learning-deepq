@@ -9,7 +9,7 @@ Adapted from assignment A0
 """
 import numpy as np
 from Helper import softmax, argmax
-from Neural_Network import NeuralNetwork, ConvNeuralNetwork
+from Neural_Network import DQN
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
@@ -27,14 +27,14 @@ class DQN_BaseAgent:
         self.batch_size = batch_size
         
         # Initialize Neural Networks for function approximation of Q(s,a)
-        self.network = ConvNeuralNetwork()
+        self.network = DQN(n_states, n_actions, neurons)
         self.optim = optim.Adam(self.network.parameters(), lr=learning_rate)
         # self.target_network = NeuralNetwork(n_states, n_actions, neurons, architecture)
         # self.target_network.load_state_dict(self.network.state_dict())
         # self.target_network.eval()
         
     def select_action(self, s, policy='egreedy', epsilon=None, temp=None):
-        s_tensor = torch.tensor(s).float()
+        s_tensor = torch.tensor(s, dtype=torch.float)
         with torch.no_grad():
             Q_sa = self.network(s_tensor).numpy().squeeze()
 
