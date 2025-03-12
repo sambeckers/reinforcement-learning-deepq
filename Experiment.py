@@ -102,6 +102,6 @@ def experiment():
 
 if __name__ == '__main__':
     global LR_explore, NS_explore, UTDR_epxlore, EF_explore
-    LR_explore, NS_explore, UTDR_explore, EF_explore = False, False, True, False
+    LR_explore, NS_explore, UTDR_explore, EF_explore = True, True, True, True
 
     experiment()

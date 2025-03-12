@@ -33,7 +33,7 @@ class ReplayBuffer:
         Sample a random batch from the buffer
         """
         batch = random.sample(self.buffer, k=self.len_batch)
-        s, a, r, s_next, done = map(np.array(), zip(*batch)) # Unzip the batch and map to arrays
+        s, a, r, s_next, done = map(np.array, zip(*batch)) # Unzip the batch and map to arrays
         # s, s_next = np.vstack(s), np.vstack(s_next) # Stack state arrays 
 
         return s, a, r, s_next, done

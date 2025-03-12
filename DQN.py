@@ -15,27 +15,8 @@ import torch.nn.functional as f
 from tqdm import tqdm
 
 class DQNAgent(DQN_BaseAgent):
-    def update(self, s, a, r, s_next, done) -> None:
-        """Update the Q-values of the agent
-
-        Args:
-            s (array): state
-            a (int): action
-            r (float): reward
-            s_next (array): next state
-            done (bool): whether the episode is done
-        """
-        # Convert to tensors
-        s_tensor = torch.FloatTensor(s).unsqueeze(0)
-        a_tensor = torch.LongTensor([a]).unsqueeze(1)
-        r_tensor = torch.FloatTensor([r]).unsqueeze(0)
-        s_next_tensor = torch.FloatTensor(s_next).unsqueeze(0)
-        done_tensor = torch.FloatTensor([done]).unsqueeze(0)
-        
-        # Get Q-values for state and next state
-        Q_sa = self.network(s_tensor).gather(1, a_tensor) # Gather all Q-values for the state and select the one corresponding to the action in dim 1
-        Q_sa_next = self.network(s_next_tensor).max(1)[0].detach() # Detach (return new tensor)
-        
+    def loss_and_optimize(self, Q_sa, r_tensor, Q_sa_next, done_tensor):
+        """Calculate the loss and optimize the network"""
         # Calculate target
         target_Q_sa = r_tensor + self.gamma * Q_sa_next * (1 - done_tensor) 
         
@@ -47,15 +28,56 @@ class DQNAgent(DQN_BaseAgent):
         loss.backward()
         self.optim.step()
 
-    def performance_update(self):
+    def update(self, s, a, r, s_next, done, TN=False) -> None:
+        """Update the Q-values of the agent
+
+        Args:
+            s (array): state
+            a (int): action
+            r (float): reward
+            s_next (array): next state
+            done (bool): whether the episode is done
+        """
+        # Convert to tensors
+        # print(s.shape, a.shape, r.shape, s_next.shape, done.shape)
+        s_tensor = torch.FloatTensor(s).unsqueeze(0)
+        a_tensor = torch.LongTensor([a]).unsqueeze(1)
+        r_tensor = torch.FloatTensor([r]).unsqueeze(0)
+        s_next_tensor = torch.FloatTensor(s_next).unsqueeze(0)
+        done_tensor = torch.FloatTensor([done]).unsqueeze(0)
+        
+        # Get Q-values for state and next state
+        Q_sa = self.network(s_tensor).gather(1, a_tensor) # Gather all Q-values for the state and select the one corresponding to the action in dim 1
+
+        if TN:
+            Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach()
+        else:
+            Q_sa_next = self.network(s_next_tensor).max(1)[0].detach() # Detach (return new tensor)
+        
+        self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
+       
+    def performance_update(self, TN=False):
         """
         Experience Replay and/or Target Network update
         """
-        pass
+        s, a, r, s_next, done = self.memory.sample()
+        s_tensor = torch.FloatTensor(s) # Already in the right shape, as for s_next
+        a_tensor = torch.LongTensor(a).unsqueeze(1)
+        r_tensor = torch.FloatTensor(r).unsqueeze(1)
+        s_next_tensor = torch.FloatTensor(s_next)
+        done_tensor = torch.FloatTensor(done).unsqueeze(1)
 
+        Q_sa = self.network(s_tensor).gather(1, a_tensor)
+
+        if TN:
+            Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach().view(-1, 1)  # Set shape to match with above tensors
+        else:
+            Q_sa_next = self.network(s_next_tensor).max(1)[0].detach().view(-1, 1)
+
+        self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
 
 def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval = 500, 
-        neurons=128, UTDR = 1, len_buffer=10000, len_batch=64):
+        neurons=128, UTDR = 1, len_buffer=10000, len_batch=128, ER=False, TN=False):
     """Runs DQN on a gym environment
 
     Args:
@@ -97,11 +119,19 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
             steps += 1
 
             if steps % UTDR == 0:
-                agent.update(s, a, r, s_next, done)
+                if ER:
+                    agent.memory.add_experience_to_buffer(s, a, r, s_next, done)
+                    if len(agent.memory.buffer) >= len_batch:
+                        agent.performance_update(TN=TN)
+                else:
+                    agent.update(s, a, r, s_next, done)
 
             s = s_next
             r_tot += r
-    
+
+        if TN:
+            agent.target_network.load_state_dict(agent.network.state_dict())
+
         if e % eval_interval == 0 and e != 0:
             eval_return = agent.evaluate(env)
             eval_returns.append(eval_return)
@@ -120,7 +150,7 @@ def test():
     temp = 1.0
     plot = False
 
-    dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot)
+    dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, ER=False, TN=True)
 
 if __name__ == '__main__':
     test()
