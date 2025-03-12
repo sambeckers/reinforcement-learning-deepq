@@ -26,7 +26,8 @@ def average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, po
     now = time.time()
     
     for rep in tqdm(range(n_repetitions), total=n_repetitions): # Loop over repetitions
-        returns, episodes = dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval, neurons, UTDR, buffer_size, batch_size)
+        returns, episodes = dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval, 
+                                neurons, UTDR, buffer_size, batch_size)
         returns_over_repetitions.append(returns)
         
     print('Running one setting takes {} minutes'.format((time.time()-now)/60))
@@ -63,7 +64,8 @@ def experiment():
         learning_rates = [0.001, 0.01, 0.1]
         Plot = LearningCurvePlot(title = 'Exploration: Learning Rate')
         for learning_rate in learning_rates:
-            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp, smoothing_window, plot, eval_interval)
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp, 
+                                                                smoothing_window, plot, eval_interval)
             Plot.add_curve(episodes, learning_curve, label = 'Learning Rate: {}'.format(learning_rate))
         Plot.save('Learning_Rate.png')
 
@@ -72,7 +74,8 @@ def experiment():
         neurons_size = [32, 64, 128]
         Plot = LearningCurvePlot(title = 'Exploration: Network Size')
         for network_size in neurons_size:
-            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp, smoothing_window, plot, eval_interval, network_size)
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
+                                                                smoothing_window, plot, eval_interval, network_size)
             Plot.add_curve(episodes, learning_curve, label = 'Network Size: {}'.format(network_size))
         Plot.save('Network_Size.png')
 
@@ -81,7 +84,8 @@ def experiment():
         UTDRs = [1, 2, 4]
         Plot = LearningCurvePlot(title = 'Exploration: Update-to-Data Ratio')
         for UTDR in UTDRs:
-            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp, smoothing_window, plot, eval_interval, neurons, UTDR)
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
+                                                                smoothing_window, plot, eval_interval, neurons, UTDR)
             Plot.add_curve(episodes, learning_curve, label = 'UTDR: {}'.format(UTDR))
         Plot.save('UTDR.png')
 
@@ -91,7 +95,8 @@ def experiment():
         epsilons = [0.03,0.1,0.3]
         Plot = LearningCurvePlot(title = 'Exploration: Exploration Factor (greedy)')
         for epsilon in epsilons:
-            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp, smoothing_window, plot, eval_interval)
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
+                                                                smoothing_window, plot, eval_interval)
             Plot.add_curve(episodes, learning_curve, label = 'Epsilon: {}'.format(epsilon))
         Plot.save('Epsilon.png')
 

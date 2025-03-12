@@ -14,6 +14,29 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as f
 import torch.optim as optim
+from collections import deque
+import random
+
+class ReplayBuffer:
+    def __init__(self, buffer_size, batch_size):
+        self.buffer = deque(maxlen=buffer_size) # Use deque for fast appends
+        self.batch_size = batch_size
+    
+    def add_experience_to_buffer(self, s, a, r, s_next, done):
+        """
+        Add a tuple of an experience to the buffer
+        """
+        self.buffer.append((s, a, r, s_next, done))
+    
+    def sample(self):
+        """
+        Sample a random batch from the buffer
+        """
+        batch = random.sample(self.buffer, k=self.batch_size)
+        s, a, r, s_next, done = map(np.array(), zip(*batch)) # Unzip the batch and map to arrays
+        # s, s_next = np.vstack(s), np.vstack(s_next) # Stack state arrays 
+
+        return s, a, r, s_next, done
 
 class DQN_BaseAgent:
     def __init__(self, n_states, n_actions, learning_rate, gamma, neurons, UTDR, buffer_size, batch_size):
@@ -41,9 +64,14 @@ class DQN_BaseAgent:
         # Initialize Neural Networks for function approximation of Q(s,a)
         self.network = NeuralNetwork(n_states, n_actions, neurons)
         self.optim = optim.Adam(self.network.parameters(), lr=learning_rate)
-        # self.target_network = NeuralNetwork(n_states, n_actions, neurons, architecture)
-        # self.target_network.load_state_dict(self.network.state_dict())
-        # self.target_network.eval()
+
+        # Experience Replay (ER)
+        self.memory = ReplayBuffer(buffer_size, batch_size)
+
+        # Target Network (TN)
+        self.target_network = NeuralNetwork(n_states, n_actions, neurons)
+        self.target_network.load_state_dict(self.network.state_dict()) # Copy the state paramaters of the NN to the TN
+        self.target_network.eval()
         
     def select_action(self, s, policy='egreedy', epsilon=None, temp=None):
         """Select an action based on the policy

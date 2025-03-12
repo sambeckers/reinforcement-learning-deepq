@@ -47,6 +47,12 @@ class DQNAgent(DQN_BaseAgent):
         loss.backward()
         self.optim.step()
 
+    def performance_update(self):
+        """
+        Experience Replay and/or Target Network update
+        """
+        pass
+
 
 def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval = 500, 
         neurons=128, UTDR = 1, buffer_size=10000, batch_size=64):
