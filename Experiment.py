@@ -20,14 +20,14 @@ from Helper import LearningCurvePlot, smooth
 
 def average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy='egreedy', 
                     epsilon=None, temp=None, smoothing_window=None, plot=False, eval_interval=500, 
-                    neurons=128, UTDR=1, buffer_size=10000, batch_size=64):
+                    neurons=128, UTDR=1, len_buffer=10000, len_batch=64):
 
     returns_over_repetitions = []
     now = time.time()
     
     for rep in tqdm(range(n_repetitions), total=n_repetitions): # Loop over repetitions
         returns, episodes = dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval, 
-                                neurons, UTDR, buffer_size, batch_size)
+                                neurons, UTDR, len_buffer, len_batch)
         returns_over_repetitions.append(returns)
         
     print('Running one setting takes {} minutes'.format((time.time()-now)/60))

@@ -18,9 +18,9 @@ from collections import deque
 import random
 
 class ReplayBuffer:
-    def __init__(self, buffer_size, batch_size):
-        self.buffer = deque(maxlen=buffer_size) # Use deque for fast appends
-        self.batch_size = batch_size
+    def __init__(self, len_buffer, len_batch):
+        self.buffer = deque(maxlen=len_buffer) # Use deque for fast appends
+        self.len_batch = len_batch
     
     def add_experience_to_buffer(self, s, a, r, s_next, done):
         """
@@ -32,14 +32,14 @@ class ReplayBuffer:
         """
         Sample a random batch from the buffer
         """
-        batch = random.sample(self.buffer, k=self.batch_size)
+        batch = random.sample(self.buffer, k=self.len_batch)
         s, a, r, s_next, done = map(np.array(), zip(*batch)) # Unzip the batch and map to arrays
         # s, s_next = np.vstack(s), np.vstack(s_next) # Stack state arrays 
 
         return s, a, r, s_next, done
 
 class DQN_BaseAgent:
-    def __init__(self, n_states, n_actions, learning_rate, gamma, neurons, UTDR, buffer_size, batch_size):
+    def __init__(self, n_states, n_actions, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch):
         """ Base class for DQN agents
 
         Args:
@@ -49,8 +49,8 @@ class DQN_BaseAgent:
             gamma (float): discount factor
             neurons (int): number of neurons in the hidden layers
             UTDR (int): Update-to-Data Ratio
-            buffer_size (int): size of the replay buffer
-            batch_size (int): size of the batch
+            len_buffer (int): size of the replay buffer
+            len_batch (int): size of the batch
         """
         self.n_states = n_states
         self.n_actions = n_actions
@@ -58,15 +58,15 @@ class DQN_BaseAgent:
         self.gamma = gamma
         self.neurons = neurons
         self.UDTR = UTDR
-        self.buffer_size = buffer_size
-        self.batch_size = batch_size
+        self.len_buffer = len_buffer
+        self.len_batch = len_batch
         
         # Initialize Neural Networks for function approximation of Q(s,a)
         self.network = NeuralNetwork(n_states, n_actions, neurons)
         self.optim = optim.Adam(self.network.parameters(), lr=learning_rate)
 
         # Experience Replay (ER)
-        self.memory = ReplayBuffer(buffer_size, batch_size)
+        self.memory = ReplayBuffer(len_buffer, len_batch)
 
         # Target Network (TN)
         self.target_network = NeuralNetwork(n_states, n_actions, neurons)

@@ -55,7 +55,7 @@ class DQNAgent(DQN_BaseAgent):
 
 
 def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval = 500, 
-        neurons=128, UTDR = 1, buffer_size=10000, batch_size=64):
+        neurons=128, UTDR = 1, len_buffer=10000, len_batch=64):
     """Runs DQN on a gym environment
 
     Args:
@@ -69,8 +69,8 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
         eval_interval (int): interval at which to evaluate the agent
         neurons (int): number of neurons in the hidden layers
         UTDR (int): Update-to-Data Ratio
-        buffer_size (int): size of the replay buffer
-        batch_size (int): batch size for training
+        len_buffer (int): size of the replay buffer
+        len_batch (int): batch size for training
     
     Returns:
         np.array: evaluation returns
@@ -78,7 +78,8 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
     """
     # Initialize environment and agent
     env = CartPole().env
-    agent = DQNAgent(env.observation_space.shape[0], env.action_space.n, learning_rate, gamma, neurons, UTDR, buffer_size, batch_size)
+    agent = DQNAgent(env.observation_space.shape[0], env.action_space.n, learning_rate, gamma, 
+                     neurons, UTDR, len_buffer, len_batch)
 
     # Store rewards and evaluation results
     r_tot = 0
