@@ -9,12 +9,12 @@ import gymnasium as gym
 
 class CartPole:
     def __init__(self):
-        self.env = gym.make("CartPole-v1", render_mode='human')
+        self.env = gym.make("CartPole-v1")
 
 
 class LunarLander:
     def __init__(self):
-        self.env = gym.make("LunarLander-v3", render_mode='human')
+        self.env = gym.make("LunarLander-v3")
 
 
 

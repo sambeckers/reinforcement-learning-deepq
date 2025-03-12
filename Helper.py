@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 
 class LearningCurvePlot:
-
     def __init__(self,title=None):
         self.fig,self.ax = plt.subplots()
         self.ax.set_xlabel('Timestep')
