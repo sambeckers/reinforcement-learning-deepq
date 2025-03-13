@@ -49,11 +49,11 @@ def experiment():
     max_episode_length = 500
     gamma = 0.99
     
-    
+
     # Parameters we will vary in the experiments, set them to some initial values: 
     # Exploration
     policy = 'egreedy' # 'egreedy' or 'softmax' 
-    epsilon = 0.1
+    epsilon = 0.01
     temp = 1.0
     learning_rate = 0.001
     neurons = 128
@@ -68,21 +68,22 @@ def experiment():
         print('Exploring Learning Rate')
         learning_rates = [0.001, 0.01, 0.1]
         Plot = LearningCurvePlot(title = 'Exploration: Learning Rate')
-        for learning_rate in learning_rates:
-            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp, 
+        for lr in learning_rates:
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, lr, gamma, policy, epsilon, temp, 
                                                                 smoothing_window, plot, eval_interval)
-            Plot.add_curve(episodes, learning_curve, label = 'Learning Rate: {}'.format(learning_rate))
+            Plot.add_curve(episodes, learning_curve, label = 'Learning Rate: {}'.format(lr))
         Plot.save('Learning_Rate.png')
 
     # Network Size
     if NS_explore:
+        print(learning_rate)
         print('Exploring Network Size')
         neurons_size = [32, 64, 128]
         Plot = LearningCurvePlot(title = 'Exploration: Network Size')
-        for network_size in neurons_size:
+        for ns in neurons_size:
             learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
-                                                                smoothing_window, plot, eval_interval, network_size)
-            Plot.add_curve(episodes, learning_curve, label = 'Network Size: {}'.format(network_size))
+                                                                smoothing_window, plot, eval_interval, ns)
+            Plot.add_curve(episodes, learning_curve, label = 'Network Size: {}'.format(ns))
         Plot.save('Network_Size.png')
 
     # Update-to-Data Ratio
@@ -90,10 +91,10 @@ def experiment():
         print('Exploring Update-to-Data Ratio')
         UTDRs = [1, 2, 4]
         Plot = LearningCurvePlot(title = 'Exploration: Update-to-Data Ratio')
-        for UTDR in UTDRs:
+        for u in UTDRs:
             learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
-                                                                smoothing_window, plot, eval_interval, neurons, UTDR)
-            Plot.add_curve(episodes, learning_curve, label = 'UTDR: {}'.format(UTDR))
+                                                                smoothing_window, plot, eval_interval, neurons, u)
+            Plot.add_curve(episodes, learning_curve, label = 'UTDR: {}'.format(u))
         Plot.save('UTDR.png')
 
     # Exploration Factor
@@ -102,10 +103,10 @@ def experiment():
         policy = 'egreedy'
         epsilons = [0.03,0.1,0.3]
         Plot = LearningCurvePlot(title = 'Exploration: Exploration Factor (greedy)')
-        for epsilon in epsilons:
-            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
+        for ep in epsilons:
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, ep, temp,
                                                                 smoothing_window, plot, eval_interval)
-            Plot.add_curve(episodes, learning_curve, label = 'Epsilon: {}'.format(epsilon))
+            Plot.add_curve(episodes, learning_curve, label = 'Epsilon: {}'.format(ep))
         Plot.save('Epsilon.png')
 
     if configurations:
@@ -121,6 +122,6 @@ def experiment():
 
 if __name__ == '__main__':
     global LR_explore, NS_explore, UTDR_epxlore, EF_explore, configurations
-    LR_explore, NS_explore, UTDR_explore, EF_explore, configurations = True, True, True, True, True
+    LR_explore, NS_explore, UTDR_explore, EF_explore, configurations = False, False, False, False, True
 
     experiment()
