@@ -49,10 +49,11 @@ class DQNAgent(DQN_BaseAgent):
         # Get Q-values for state and next state
         Q_sa = self.network(s_tensor).gather(1, a_tensor) # Gather all Q-values for the state and select the one corresponding to the action in dim 1
 
-        if TN:
-            Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach()
-        else:
-            Q_sa_next = self.network(s_next_tensor).max(1)[0].detach() # Detach (return new tensor)
+        with torch.no_grad():
+            if TN:
+                Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach()
+            else:
+                Q_sa_next = self.network(s_next_tensor).max(1)[0].detach() # Detach (return new tensor)
         
         self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
        
@@ -69,10 +70,11 @@ class DQNAgent(DQN_BaseAgent):
 
         Q_sa = self.network(s_tensor).gather(1, a_tensor)
 
-        if TN:
-            Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach().view(-1, 1)  # Set shape to match with above tensors
-        else:
-            Q_sa_next = self.network(s_next_tensor).max(1)[0].detach().view(-1, 1)
+        with torch.no_grad():
+            if TN:
+                Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach().view(-1, 1)  # Set shape to match with above tensors
+            else:
+                Q_sa_next = self.network(s_next_tensor).max(1)[0].detach().view(-1, 1)
 
         self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
 
@@ -131,7 +133,7 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
             s = s_next
             r_tot += r
 
-        if TN:
+        if TN and e % 100 == 0:
             agent.target_network.load_state_dict(agent.network.state_dict())
 
         if e % eval_interval == 0 and e != 0:

@@ -14,6 +14,7 @@ Reinforcemnt Learning 2025 A1, Leiden University
 """
 import numpy as np
 import time
+import argparse
 from tqdm import tqdm
 from DQN import dqn
 from Helper import LearningCurvePlot, smooth
@@ -36,10 +37,10 @@ def average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, po
         learning_curve = smooth(learning_curve,smoothing_window) # additional smoothing
     return learning_curve, episodes  
 
-def experiment():
+def experiment(args):
     # Set hyperparameters
         # Experiment      
-    n_repetitions = 5
+    n_repetitions = 1
     smoothing_window = 9 # Must be an odd number. Use 'None' to switch smoothing off!
     plot = False # Plotting is very slow, switch it off when we run repetitions
     
@@ -49,7 +50,6 @@ def experiment():
     max_episode_length = 500
     gamma = 0.99
     
-
     # Parameters we will vary in the experiments, set them to some initial values: 
     # Exploration
     policy = 'egreedy' # 'egreedy' or 'softmax' 
@@ -64,7 +64,7 @@ def experiment():
     TN = False
 
     # Learning Rate
-    if LR_explore:
+    if args.LR_explore:
         print('Exploring Learning Rate')
         learning_rates = [0.001, 0.01, 0.1]
         Plot = LearningCurvePlot(title = 'Exploration: Learning Rate')
@@ -75,7 +75,7 @@ def experiment():
         Plot.save('Learning_Rate.png')
 
     # Network Size
-    if NS_explore:
+    if args.NS_explore:
         print(learning_rate)
         print('Exploring Network Size')
         neurons_size = [32, 64, 128]
@@ -87,7 +87,7 @@ def experiment():
         Plot.save('Network_Size.png')
 
     # Update-to-Data Ratio
-    if UTDR_explore:
+    if args.UTDR_explore:
         print('Exploring Update-to-Data Ratio')
         UTDRs = [1, 2, 4]
         Plot = LearningCurvePlot(title = 'Exploration: Update-to-Data Ratio')
@@ -98,7 +98,7 @@ def experiment():
         Plot.save('UTDR.png')
 
     # Exploration Factor
-    if EF_explore:
+    if args.EF_explore:
         print('Exploring Exploration Factor')
         policy = 'egreedy'
         epsilons = [0.03,0.1,0.3]
@@ -109,7 +109,7 @@ def experiment():
             Plot.add_curve(episodes, learning_curve, label = 'Epsilon: {}'.format(ep))
         Plot.save('Epsilon.png')
 
-    if configurations:
+    if args.configurations:
         print('Exploring Configurations')
         configs = [('DQN - Naive', False, False), ('DQN - TN', False, True), ('DQN - ER', True, False), ('DQN - TN + ER', True, True)]
         Plot = LearningCurvePlot(title = 'Exploration: Configurations')
@@ -121,7 +121,14 @@ def experiment():
 
 
 if __name__ == '__main__':
-    global LR_explore, NS_explore, UTDR_epxlore, EF_explore, configurations
-    LR_explore, NS_explore, UTDR_explore, EF_explore, configurations = False, False, False, False, True
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--LR_explore', action='store_true', help='Explore learning rates')
+    parser.add_argument('--NS_explore', action='store_true', help='Explore network sizes')
+    parser.add_argument('--UTDR_explore', action='store_true', help='Explore update-to-data ratio')
+    parser.add_argument('--EF_explore', action='store_true', help='Explore exploration factors')
+    parser.add_argument('--configurations', action='store_true', help='Explore different DQN configurations')
+    
+    args = parser.parse_args()
+    experiment(args)
 
     experiment()
