@@ -93,6 +93,8 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
         UTDR (int): Update-to-Data Ratio
         len_buffer (int): size of the replay buffer
         len_batch (int): batch size for training
+        ER (bool): whether to use experience replay
+        TN (bool): whether to use a target network
     
     Returns:
         np.array: evaluation returns

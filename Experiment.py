@@ -20,14 +20,14 @@ from Helper import LearningCurvePlot, smooth
 
 def average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy='egreedy', 
                     epsilon=None, temp=None, smoothing_window=None, plot=False, eval_interval=500, 
-                    neurons=128, UTDR=1, len_buffer=10000, len_batch=64):
+                    neurons=128, UTDR=1, len_buffer=10000, len_batch=64, ER=False, TN=False):
 
     returns_over_repetitions = []
     now = time.time()
     
     for rep in tqdm(range(n_repetitions), total=n_repetitions): # Loop over repetitions
         returns, episodes = dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval, 
-                                neurons, UTDR, len_buffer, len_batch)
+                                neurons, UTDR, len_buffer, len_batch, ER, TN)
         returns_over_repetitions.append(returns)
         
     print('Running one setting takes {} minutes'.format((time.time()-now)/60))
@@ -44,23 +44,28 @@ def experiment():
     plot = False # Plotting is very slow, switch it off when we run repetitions
     
     # MDP    
-    n_episodes = 500 # Set one extra timestep to ensure evaluation at start and end
+    n_episodes = 1000 # Set one extra timestep to ensure evaluation at start and end
     eval_interval = 10
     max_episode_length = 500
     gamma = 0.99
     
-
+    
     # Parameters we will vary in the experiments, set them to some initial values: 
     # Exploration
     policy = 'egreedy' # 'egreedy' or 'softmax' 
-    epsilon = 0.05
+    epsilon = 0.1
     temp = 1.0
-    learning_rate = 0.01
+    learning_rate = 0.001
     neurons = 128
     UTDR = 1
+    len_buffer = 10000
+    len_batch = 64
+    ER = False
+    TN = False
 
     # Learning Rate
     if LR_explore:
+        print('Exploring Learning Rate')
         learning_rates = [0.001, 0.01, 0.1]
         Plot = LearningCurvePlot(title = 'Exploration: Learning Rate')
         for learning_rate in learning_rates:
@@ -71,6 +76,7 @@ def experiment():
 
     # Network Size
     if NS_explore:
+        print('Exploring Network Size')
         neurons_size = [32, 64, 128]
         Plot = LearningCurvePlot(title = 'Exploration: Network Size')
         for network_size in neurons_size:
@@ -81,6 +87,7 @@ def experiment():
 
     # Update-to-Data Ratio
     if UTDR_explore:
+        print('Exploring Update-to-Data Ratio')
         UTDRs = [1, 2, 4]
         Plot = LearningCurvePlot(title = 'Exploration: Update-to-Data Ratio')
         for UTDR in UTDRs:
@@ -91,6 +98,7 @@ def experiment():
 
     # Exploration Factor
     if EF_explore:
+        print('Exploring Exploration Factor')
         policy = 'egreedy'
         epsilons = [0.03,0.1,0.3]
         Plot = LearningCurvePlot(title = 'Exploration: Exploration Factor (greedy)')
@@ -100,8 +108,19 @@ def experiment():
             Plot.add_curve(episodes, learning_curve, label = 'Epsilon: {}'.format(epsilon))
         Plot.save('Epsilon.png')
 
+    if configurations:
+        print('Exploring Configurations')
+        configs = [('DQN - Naive', False, False), ('DQN - TN', False, True), ('DQN - ER', True, False), ('DQN - TN + ER', True, True)]
+        Plot = LearningCurvePlot(title = 'Exploration: Configurations')
+        for config in configs:
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
+                                                                smoothing_window, plot, eval_interval, neurons, UTDR, len_buffer, len_batch, config[1], config[2])
+            Plot.add_curve(episodes, learning_curve, label = config[0])
+        Plot.save('Configurations.png')
+
+
 if __name__ == '__main__':
-    global LR_explore, NS_explore, UTDR_epxlore, EF_explore
-    LR_explore, NS_explore, UTDR_explore, EF_explore = True, True, True, True
+    global LR_explore, NS_explore, UTDR_epxlore, EF_explore, configurations
+    LR_explore, NS_explore, UTDR_explore, EF_explore, configurations = True, True, True, True, True
 
     experiment()
