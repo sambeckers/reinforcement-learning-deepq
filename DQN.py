@@ -79,7 +79,7 @@ class DQNAgent(DQN_BaseAgent):
         self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
 
 def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval = 500, 
-        neurons=128, UTDR = 1, len_buffer=10000, len_batch=128, ER=False, TN=False):
+        neurons=128, UTDR = 1, len_buffer=10000, len_batch=128, ER=False, TN=False, Lunar=False):
     """Runs DQN on a gym environment
 
     Args:
@@ -103,7 +103,10 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
         np.array: evaluation episodes
     """
     # Initialize environment and agent
-    env = CartPole().env
+    if Lunar:
+        env = LunarLander().env
+    else:
+        env = CartPole().env
     agent = DQNAgent(env.observation_space.shape[0], env.action_space.n, learning_rate, gamma, 
                      neurons, UTDR, len_buffer, len_batch)
 

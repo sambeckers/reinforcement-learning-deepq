@@ -5,13 +5,6 @@ Reinforcemnt Learning 2025 A1, Leiden University
 
 @author(s): Sam Beckers
 """
-"""
-Experiment
-Created on 10-03-2025
-Reinforcemnt Learning 2025 A1, Leiden University
-
-@author(s): Sam Beckers
-"""
 import numpy as np
 import time
 import argparse
@@ -21,14 +14,14 @@ from Helper import LearningCurvePlot, smooth
 
 def average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy='egreedy', 
                     epsilon=None, temp=None, smoothing_window=None, plot=False, eval_interval=500, 
-                    neurons=128, UTDR=1, len_buffer=10000, len_batch=64, ER=False, TN=False):
+                    neurons=128, UTDR=1, len_buffer=10000, len_batch=64, ER=False, TN=False, Lunar=False):
 
     returns_over_repetitions = []
     now = time.time()
     
     for rep in tqdm(range(n_repetitions), total=n_repetitions): # Loop over repetitions
         returns, episodes = dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval, 
-                                neurons, UTDR, len_buffer, len_batch, ER, TN)
+                                neurons, UTDR, len_buffer, len_batch, ER, TN, Lunar)
         returns_over_repetitions.append(returns)
         
     print('Running one setting takes {} minutes'.format((time.time()-now)/60))
@@ -40,7 +33,7 @@ def average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, po
 def experiment(args):
     # Set hyperparameters
         # Experiment      
-    n_repetitions = 1
+    n_repetitions = 5
     smoothing_window = 9 # Must be an odd number. Use 'None' to switch smoothing off!
     plot = False # Plotting is very slow, switch it off when we run repetitions
     
@@ -53,7 +46,7 @@ def experiment(args):
     # Parameters we will vary in the experiments, set them to some initial values: 
     # Exploration
     policy = 'egreedy' # 'egreedy' or 'softmax' 
-    epsilon = 0.01
+    epsilon = 0.1
     temp = 1.0
     learning_rate = 0.001
     neurons = 128
@@ -119,6 +112,16 @@ def experiment(args):
             Plot.add_curve(episodes, learning_curve, label = config[0])
         Plot.save('Configurations.png')
 
+    if args.lunar_bonus:
+        print('Running Lunar Lander')
+        n_episodes = 500
+        learning_rate = 0.01
+        Plot = LearningCurvePlot(title = 'Lunar Lander')
+        learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
+                                                            smoothing_window, plot, eval_interval, neurons, UTDR, len_buffer, len_batch, ER, TN, True)
+        Plot.add_curve(episodes, learning_curve, label = 'Lunar Lander')
+        Plot.save('Lunar_Lander.png')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -127,8 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('--UTDR_explore', action='store_true', help='Explore update-to-data ratio')
     parser.add_argument('--EF_explore', action='store_true', help='Explore exploration factors')
     parser.add_argument('--configurations', action='store_true', help='Explore different DQN configurations')
+    parser.add_argument('--lunar_bonus', action='store_true', help='Run the Lunar Lander environment')
     
     args = parser.parse_args()
     experiment(args)
-
-    experiment()
