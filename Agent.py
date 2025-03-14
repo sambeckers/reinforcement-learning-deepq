@@ -72,6 +72,12 @@ class DQN_BaseAgent:
         self.target_network = NeuralNetwork(n_states, n_actions, neurons)
         self.target_network.load_state_dict(self.network.state_dict()) # Copy the state paramaters of the NN to the TN
         self.target_network.eval()
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else 
+                                   "mps" if torch.backends.mps.is_available() else "cpu")
+        print(f"Using {self.device} for pytorch")
+        self.network.to(self.device)
+        self.target_network.to(self.device)
         
     def select_action(self, s, policy='egreedy', epsilon=None, temp=None):
         """Select an action based on the policy
@@ -86,11 +92,11 @@ class DQN_BaseAgent:
             a (int): action
         """
         if isinstance(s, torch.Tensor):
-             s_tensor = s.clone().detach().float()
+            s_tensor = s.clone().detach().float().to(self.device)
         else:
-            s_tensor = torch.tensor(s).float()
+            s_tensor = torch.tensor(s).float().to(self.device)
         with torch.no_grad():
-            Q_sa = self.network(s_tensor).numpy().squeeze()
+            Q_sa = self.network(s_tensor).cpu().numpy().squeeze()
 
         if policy == 'greedy':
             a = argmax(Q_sa)
@@ -129,6 +135,7 @@ class DQN_BaseAgent:
 
         for i in range(n_eval_episodes):
             s = eval_env.reset()[0] 
+            s = torch.tensor(s, dtype=torch.float32, device=self.device)
             R_ep = 0 # Reward per episode
             for t in range(max_episode_length):
                 a = self.select_action(s, 'greedy') 
@@ -138,6 +145,7 @@ class DQN_BaseAgent:
                     break
                 else:
                     s = s_prime
+                    s = torch.tensor(s, dtype=torch.float32, device=self.device)
             returns.append(R_ep)
     
         mean_return = np.mean(returns)

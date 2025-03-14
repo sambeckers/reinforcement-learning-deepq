@@ -15,13 +15,16 @@ import torch.nn.functional as f
 from tqdm import tqdm
 
 class DQNAgent(DQN_BaseAgent):
+    def __init__(self, state_dim, action_dim, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch):
+        super().__init__(state_dim, action_dim, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch)
+
     def loss_and_optimize(self, Q_sa, r_tensor, Q_sa_next, done_tensor):
         """Calculate the loss and optimize the network"""
         # Calculate target
         target_Q_sa = r_tensor + self.gamma * Q_sa_next * (1 - done_tensor) 
         
         # Calculate loss
-        loss = f.mse_loss(Q_sa, target_Q_sa)
+        loss = f.mse_loss(Q_sa, target_Q_sa.to(self.device))  # Move target to same device
 
         # Optimize
         self.optim.zero_grad()
@@ -39,42 +42,35 @@ class DQNAgent(DQN_BaseAgent):
             done (bool): whether the episode is done
         """
         # Convert to tensors
-        # print(s.shape, a.shape, r.shape, s_next.shape, done.shape)
-        s_tensor = torch.FloatTensor(s).unsqueeze(0)
-        a_tensor = torch.LongTensor([a]).unsqueeze(1)
-        r_tensor = torch.FloatTensor([r]).unsqueeze(0)
-        s_next_tensor = torch.FloatTensor(s_next).unsqueeze(0)
-        done_tensor = torch.FloatTensor([done]).unsqueeze(0)
+        s_tensor = torch.FloatTensor(s).unsqueeze(0).to(self.device)
+        a_tensor = torch.LongTensor([a]).unsqueeze(1).to(self.device)
+        r_tensor = torch.FloatTensor([r]).unsqueeze(0).to(self.device)
+        s_next_tensor = torch.FloatTensor(s_next).unsqueeze(0).to(self.device)
+        done_tensor = torch.FloatTensor([done]).unsqueeze(0).to(self.device)
         
         # Get Q-values for state and next state
         Q_sa = self.network(s_tensor).gather(1, a_tensor) # Gather all Q-values for the state and select the one corresponding to the action in dim 1
 
         with torch.no_grad():
-            if TN:
-                Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach()
-            else:
-                Q_sa_next = self.network(s_next_tensor).max(1)[0].detach() # Detach (return new tensor)
+            Q_sa_next = (self.target_network if TN else self.network)(s_next_tensor).max(1)[0].detach()
         
-        self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
-       
+        self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next.to(self.device), done_tensor)
+
     def performance_update(self, TN=False):
         """
         Experience Replay and/or Target Network update
         """
         s, a, r, s_next, done = self.memory.sample()
-        s_tensor = torch.FloatTensor(s) # Already in the right shape, as for s_next
-        a_tensor = torch.LongTensor(a).unsqueeze(1)
-        r_tensor = torch.FloatTensor(r).unsqueeze(1)
-        s_next_tensor = torch.FloatTensor(s_next)
-        done_tensor = torch.FloatTensor(done).unsqueeze(1)
+        s_tensor = torch.FloatTensor(s).to(self.device) # Already in the right shape, as for s_next
+        a_tensor = torch.LongTensor(a).unsqueeze(1).to(self.device)
+        r_tensor = torch.FloatTensor(r).unsqueeze(1).to(self.device)
+        s_next_tensor = torch.FloatTensor(s_next).to(self.device)
+        done_tensor = torch.FloatTensor(done).unsqueeze(1).to(self.device)
 
         Q_sa = self.network(s_tensor).gather(1, a_tensor)
 
         with torch.no_grad():
-            if TN:
-                Q_sa_next = self.target_network(s_next_tensor).max(1)[0].detach().view(-1, 1)  # Set shape to match with above tensors
-            else:
-                Q_sa_next = self.network(s_next_tensor).max(1)[0].detach().view(-1, 1)
+            Q_sa_next = (self.target_network if TN else self.network)(s_next_tensor).max(1)[0].detach().view(-1, 1)
 
         self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
 
@@ -109,6 +105,11 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
         env = CartPole().env
     agent = DQNAgent(env.observation_space.shape[0], env.action_space.n, learning_rate, gamma, 
                      neurons, UTDR, len_buffer, len_batch)
+
+    # Ensure model is on correct device
+    agent.network.to(agent.device)
+    if TN:
+        agent.target_network.to(agent.device)
 
     # Store rewards and evaluation results
     r_tot = 0

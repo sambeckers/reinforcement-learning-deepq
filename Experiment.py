@@ -114,8 +114,6 @@ def experiment(args):
 
     if args.lunar_bonus:
         print('Running Lunar Lander')
-        n_episodes = 500
-        learning_rate = 0.01
         Plot = LearningCurvePlot(title = 'Lunar Lander')
         learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
                                                             smoothing_window, plot, eval_interval, neurons, UTDR, len_buffer, len_batch, ER, TN, True)
