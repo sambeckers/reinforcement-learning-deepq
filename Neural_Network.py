@@ -18,7 +18,7 @@ class NeuralNetwork(nn.Module):
         Args:
             s_dim (int): dimension of the state space
             a_dim (int): dimension of the action space
-            neurons (int): number of neurons in the hidden layers
+            neurons (int): number of neurons in the layers
         """
         super(NeuralNetwork, self).__init__()
         self.fc1 = nn.Linear(s_dim, neurons) 
@@ -60,20 +60,29 @@ class DuelingNeuralNetwork(nn.Module):
         return Q
 
 class ConvNeuralNetwork(nn.Module):
-    def __init__(self):
+    """
+    Convolutional Neural Network with two convolutional layers and three fully connected layers.
+    """
+    def __init__(self, input_channels, num_classes):
+        """
+        Args:
+            input_channels (int): Number of input channels
+            num_classes (int): Number of output classes
+        """
         super(ConvNeuralNetwork, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv1 = nn.Conv2d(input_channels, 6, kernel_size=5)
+        self.relu = nn.ReLU()
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
+
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, num_classes)
 
     def forward(self, x):
-        x = self.pool(f.relu(self.conv1(x)))
-        x = self.pool(f.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = f.relu(self.fc1(x))
-        x = f.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        x = self.pool(self.relu(self.conv1(x)))
+        x = self.pool(self.relu(self.conv2(x)))
+        x = x.view(x.size(0), -1)
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        return self.fc3(x)
