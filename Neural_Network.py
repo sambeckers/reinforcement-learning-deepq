@@ -30,6 +30,34 @@ class NeuralNetwork(nn.Module):
         x = f.relu(self.fc2(x))
         return self.fc3(x).float()
 
+class DuelingNeuralNetwork(nn.Module):
+    """
+    Neural Network for Dueling DQN
+    """
+    def __init__(self, s_dim, a_dim, neurons):
+        super(DuelingNeuralNetwork, self).__init__()
+        self.fc1 = nn.Linear(s_dim, neurons)
+        self.relu = nn.ReLU()
+
+        self.fc_value = nn.Linear(neurons, neurons)
+        self.fc_adv = nn.Linear(neurons, neurons) # Advantage
+
+        self.value = nn.Linear(neurons, 1) 
+        self.adv = nn.Linear(neurons, a_dim) 
+
+    def forward(self, state):
+        x = self.relu(self.fc1(state))
+        
+        value = self.relu(self.fc_value(x))
+        adv = self.relu(self.fc_adv(x))
+        
+        value = self.value(value) 
+        adv = self.adv(adv)
+        
+        adv_mean = torch.mean(adv)
+        Q = value + adv - adv_mean
+
+        return Q
 
 class ConvNeuralNetwork(nn.Module):
     def __init__(self):

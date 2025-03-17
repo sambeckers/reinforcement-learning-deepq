@@ -15,8 +15,8 @@ import torch.nn.functional as f
 from tqdm import tqdm
 
 class DQNAgent(DQN_BaseAgent):
-    def __init__(self, state_dim, action_dim, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch):
-        super().__init__(state_dim, action_dim, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch)
+    def __init__(self, state_dim, action_dim, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch, dueling):
+        super().__init__(state_dim, action_dim, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch, dueling)
 
     def loss_and_optimize(self, Q_sa, r_tensor, Q_sa_next, done_tensor):
         """Calculate the loss and optimize the network"""
@@ -75,7 +75,7 @@ class DQNAgent(DQN_BaseAgent):
         self.loss_and_optimize(Q_sa, r_tensor, Q_sa_next, done_tensor)
 
 def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=None, plot=True, eval_interval = 500, 
-        neurons=128, UTDR = 1, len_buffer=10000, len_batch=128, ER=False, TN=False, Lunar=False):
+        neurons=128, UTDR = 1, len_buffer=10000, len_batch=128, ER=False, TN=False, Lunar=False, dueling=False):
     """Runs DQN on a gym environment
 
     Args:
@@ -93,6 +93,8 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
         len_batch (int): batch size for training
         ER (bool): whether to use experience replay
         TN (bool): whether to use a target network
+        Lunar (bool): whether to use the Lunar Lander environment
+        dueling (bool): whether to use a dueling network
     
     Returns:
         np.array: evaluation returns
@@ -104,9 +106,8 @@ def dqn(n_episodes, learning_rate, gamma, policy='egreedy', epsilon=None, temp=N
     else:
         env = CartPole().env
     agent = DQNAgent(env.observation_space.shape[0], env.action_space.n, learning_rate, gamma, 
-                     neurons, UTDR, len_buffer, len_batch)
+                     neurons, UTDR, len_buffer, len_batch, dueling)
 
-    # Ensure model is on correct device
     agent.network.to(agent.device)
     if TN:
         agent.target_network.to(agent.device)
@@ -158,7 +159,7 @@ def test():
     temp = 1.0
     plot = False
 
-    dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, ER=False, TN=True)
+    dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, ER=False, TN=False, dueling=True)
 
 if __name__ == '__main__':
     test()

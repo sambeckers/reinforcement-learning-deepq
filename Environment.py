@@ -11,18 +11,10 @@ class CartPole:
     def __init__(self):
         self.env = gym.make("CartPole-v1")
 
+class VectorizedCartPole:
+    def __init__(self):
+        self.env = gym.make_vec("CartPole-v1", num_envs=4)
 
 class LunarLander:
     def __init__(self):
         self.env = gym.make("LunarLander-v3")
-
-
-
-# episode_over = False
-# while not episode_over:
-#     action = env.action_space.sample()  # agent policy that uses the observation and info
-#     observation, reward, terminated, truncated, info = env.step(action)
-
-#     episode_over = terminated or truncated
-
-# env.close()

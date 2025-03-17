@@ -3,6 +3,8 @@ Experiment
 Created on 10-03-2025
 Reinforcemnt Learning 2025 A1, Leiden University
 
+Adapted from assignment A0
+
 @author(s): Sam Beckers
 """
 import numpy as np
@@ -14,14 +16,14 @@ from Helper import LearningCurvePlot, smooth
 
 def average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy='egreedy', 
                     epsilon=None, temp=None, smoothing_window=None, plot=False, eval_interval=500, 
-                    neurons=128, UTDR=1, len_buffer=10000, len_batch=64, ER=False, TN=False, Lunar=False):
+                    neurons=128, UTDR=1, len_buffer=10000, len_batch=64, ER=False, TN=False, Lunar=False, dueling=False):
 
     returns_over_repetitions = []
     now = time.time()
     
     for rep in tqdm(range(n_repetitions), total=n_repetitions): # Loop over repetitions
         returns, episodes = dqn(n_episodes, learning_rate, gamma, policy, epsilon, temp, plot, eval_interval, 
-                                neurons, UTDR, len_buffer, len_batch, ER, TN, Lunar)
+                                neurons, UTDR, len_buffer, len_batch, ER, TN, Lunar, dueling)
         returns_over_repetitions.append(returns)
         
     print('Running one setting takes {} minutes'.format((time.time()-now)/60))
@@ -55,6 +57,8 @@ def experiment(args):
     len_batch = 64
     ER = False
     TN = False
+    Lunar = False
+    dueling = False
 
     # Learning Rate
     if args.LR_explore:
@@ -119,6 +123,17 @@ def experiment(args):
                                                             smoothing_window, plot, eval_interval, neurons, UTDR, len_buffer, len_batch, ER, TN, True)
         Plot.add_curve(episodes, learning_curve, label = 'Lunar Lander')
         Plot.save('Lunar_Lander.png')
+    
+    if args.dueling_bonus:
+        print('Comparing Dueling DQN to Naive DQN')
+        Plot = LearningCurvePlot(title = 'Dueling DQN vs Naive DQN')
+        dueling = [True, False]
+        for d in dueling:
+            learning_curve, episodes = average_over_repetitions(n_repetitions, n_episodes, learning_rate, gamma, policy, epsilon, temp,
+                                                                smoothing_window, plot, eval_interval, neurons, UTDR, len_buffer, len_batch, ER, TN, False, d)
+            Plot.add_curve(episodes, learning_curve, label = 'Dueling: {}'.format(d))
+        Plot.save('Dueling_DQN.png')
+
 
 
 if __name__ == '__main__':
@@ -129,6 +144,7 @@ if __name__ == '__main__':
     parser.add_argument('--EF_explore', action='store_true', help='Explore exploration factors')
     parser.add_argument('--configurations', action='store_true', help='Explore different DQN configurations')
     parser.add_argument('--lunar_bonus', action='store_true', help='Run the Lunar Lander environment')
+    parser.add_argument('--dueling_bonus', action='store_true', help='Compare Dueling DQN to Naive DQN')
     
     args = parser.parse_args()
     experiment(args)

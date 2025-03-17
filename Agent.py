@@ -9,7 +9,7 @@ Adapted from assignment A0
 """
 import numpy as np
 from Helper import softmax, argmax
-from Neural_Network import NeuralNetwork, ConvNeuralNetwork
+from Neural_Network import NeuralNetwork, DuelingNeuralNetwork
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
@@ -39,7 +39,7 @@ class ReplayBuffer:
         return s, a, r, s_next, done
 
 class DQN_BaseAgent:
-    def __init__(self, n_states, n_actions, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch):
+    def __init__(self, n_states, n_actions, learning_rate, gamma, neurons, UTDR, len_buffer, len_batch, dueling):
         """ Base class for DQN agents
 
         Args:
@@ -51,6 +51,7 @@ class DQN_BaseAgent:
             UTDR (int): Update-to-Data Ratio
             len_buffer (int): size of the replay buffer
             len_batch (int): size of the batch
+            dueling (bool): whether to use dueling DQN
         """
         self.n_states = n_states
         self.n_actions = n_actions
@@ -60,16 +61,24 @@ class DQN_BaseAgent:
         self.UDTR = UTDR
         self.len_buffer = len_buffer
         self.len_batch = len_batch
+        self.dueling = dueling
         
         # Initialize Neural Networks for function approximation of Q(s,a)
-        self.network = NeuralNetwork(n_states, n_actions, neurons)
+        if self.dueling:
+            self.network = DuelingNeuralNetwork(n_states, n_actions, neurons)
+        else:
+            self.network = NeuralNetwork(n_states, n_actions, neurons)
+
         self.optim = optim.Adam(self.network.parameters(), lr=learning_rate)
 
         # Experience Replay (ER)
         self.memory = ReplayBuffer(len_buffer, len_batch)
 
         # Target Network (TN)
-        self.target_network = NeuralNetwork(n_states, n_actions, neurons)
+        if self.dueling:
+            self.target_network = DuelingNeuralNetwork(n_states, n_actions, neurons)
+        else:
+            self.target_network = NeuralNetwork(n_states, n_actions, neurons)
         self.target_network.load_state_dict(self.network.state_dict()) # Copy the state paramaters of the NN to the TN
         self.target_network.eval()
 

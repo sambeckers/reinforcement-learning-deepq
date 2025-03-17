@@ -3,6 +3,8 @@ Helper
 Created on 10-03-2025
 Reinforcemnt Learning 2025 A1, Leiden University
 
+Adapted from assignment A0
+
 @author(s): Sam Beckers
 """
 import numpy as np
