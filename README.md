@@ -1,5 +1,5 @@
 # Assignment 1 for Reinforcement Learning 2025 (Leiden University): Deep Q-learning
-## Submitted by Sam Beckers, s2963108
+## Submitted by Sam Beckers
 The python files in this repository are:
 1. DQN.py
 2. Agent.py
